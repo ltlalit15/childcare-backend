@@ -3,11 +3,11 @@ import jwt from 'jsonwebtoken';
 import pool from '../config/db.js';
 
 export const registerUser = async (req, res) => {
-  const { first_name, last_name, email, password, role_id } = req.body;
+  const { first_name, last_name, email, password, role_id, status  } = req.body;
   const hashed = await bcrypt.hash(password, 10);
   await pool.query(
-    "INSERT INTO users (first_name, last_name, email, password, role_id) VALUES (?, ?, ?, ?, ?)",
-    [first_name, last_name, email, hashed, role_id]
+    "INSERT INTO users (first_name, last_name, email, password, role_id, status ) VALUES (?, ?, ?, ?, ?)",
+    [first_name, last_name, email, hashed, role_id, status ]
   );
   res.json({ message: "User registered" });
 };
