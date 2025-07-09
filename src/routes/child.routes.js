@@ -27,7 +27,7 @@
 
 import multer from 'multer';
 import express from 'express';
-import { addChild, getChild, updateChild } from '../controllers/child.controller.js';
+import { addChild, getChild, updateChild, getAllChildren } from '../controllers/child.controller.js';
 // import { verifyToken, authorizeRoles } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -70,6 +70,13 @@ router.get(
   // verifyToken,
   // authorizeRoles("Admin", "Secretary", "Teacher"),
   getChild
+);
+
+router.get(
+"/",
+  // verifyToken,
+  // authorizeRoles("Admin", "Secretary", "Teacher"),
+  getAllChildren
 );
 
 router.patch(

@@ -111,7 +111,7 @@
 
 
 import pool from "../config/db.js"
-import { sendResponse } from "../utils/response.js";
+import { sendError, sendResponse } from "../utils/response.js";
 import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
 import bcrypt from "bcrypt";
 
@@ -340,6 +340,33 @@ export const getChild = async (req, res) => {
     });
   }
 };
+
+
+export const getAllChildren = async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT 
+        c.*, 
+        u.first_name, u.last_name, u.email as user_email, 
+        u.phone as user_phone, u.status as user_status,
+        r.name as role_name
+      FROM children c
+      JOIN users u ON c.user_id = u.user_id
+      JOIN roles r ON u.role_id = r.role_id
+      ORDER BY c.enrollment_date DESC`
+    );
+
+    return sendResponse(res, 200, "Children retrieved successfully.",rows)
+
+
+    
+  } catch (error) {
+    console.error("Get all children failed:", error);
+    return sendError(res, 500, "Failed to retrieve children", error.message);
+    
+  }
+};
+
 
 // Optional: Update child
 export const updateChild = async (req, res) => {
