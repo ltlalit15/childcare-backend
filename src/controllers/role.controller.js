@@ -2,17 +2,17 @@ import  pool  from "../config/db.js";
 import { sendResponse } from "../utils/response.js";
 
 export const createRole = async (req, res) => {
-  const { name } = req.body;
+  const { role_name } = req.body;
 
-  if (!name) {
+  if (!role_name) {
     return res.status(400).json({ message: "Name required" });
   }
 
   try {
     // Insert role into DB
     const [result] = await pool.query(
-      `INSERT INTO roles (name) VALUES (?)`,
-      [name]
+      `INSERT INTO roles (role_name) VALUES (?)`,
+      [role_name]
     );
 
     const roleId = result.insertId;

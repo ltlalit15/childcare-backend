@@ -44,8 +44,11 @@ export const getDCbyID  = async( req, res) => {
      const { id } = req.params;
      try{
       const [ result ] =  await pool.query('DELETE FROM delivery_challans WHERE id = ?', [id]);
-      if (result.affectedRows === 0) return res.status(404).json({ message: 'Classroom not found' });
-       return sendResponse(res, 200, "Delivery Challan deleted successfully",{ message: 'Classroom deleted' });
+     if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Delivery Challan not found' });
+    }
+
+    return sendResponse(res, 200, "Delivery Challan deleted successfully", { deletedId: id });
      }
      catch( error) {
       return sendError(res, 500, "Internal Server Error",{ error: error.message });

@@ -110,6 +110,7 @@
 // };
 
 
+import { send } from "process";
 import pool from "../config/db.js"
 import { sendError, sendResponse } from "../utils/response.js";
 import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
@@ -307,11 +308,11 @@ export const getChild = async (req, res) => {
         c.*, 
         u.first_name, u.last_name, u.email as user_email, 
         u.phone as user_phone, u.status as user_status,
-        r.name as role_name
+        r.role_name as role_name
       FROM children c
       JOIN users u ON c.user_id = u.user_id
       JOIN roles r ON u.role_id = r.role_id
-      WHERE c.child_id = ?`,
+      WHERE  c.child_id = ?`,
       [child_id]
     );
 
@@ -349,7 +350,7 @@ export const getAllChildren = async (req, res) => {
         c.*, 
         u.first_name, u.last_name, u.email as user_email, 
         u.phone as user_phone, u.status as user_status,
-        r.name as role_name
+        r.role_name as role_name
       FROM children c
       JOIN users u ON c.user_id = u.user_id
       JOIN roles r ON u.role_id = r.role_id
@@ -489,5 +490,26 @@ export const updateChild = async (req, res) => {
       error: error.message,
       success: false
     });
+  }
+};
+
+
+
+export const deleteChild = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [rows] = await pool.query('SELECT * FROM Children WHERE child_id = ? AND is_deleted = 0', [id]);
+    if (rows.length === 0) {
+     
+      return sendError( res, 404, "Child not found or already deleted", { message: 'Child not found or already deleted'})
+    }
+
+    await pool.query('UPDATE Children SET is_deleted = 1 WHERE child_id = ?', [id]);
+
+    return sendResponse(res, 200, "Child deleted successfully", { deletedId: id });
+  } catch (err) {
+    console.error('Soft delete error:', err);
+    return sendError(res, 500, "Internal Server Error", err.message);
   }
 };

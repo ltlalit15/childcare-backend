@@ -12,7 +12,8 @@ export const registerUser = async (req, res) => {
       [email]
     );
     if (existingUser) {
-      return res.status(400).json({ message: "Email already registered" });
+     
+      return sendError(res, 400, "Email already registered", { message: "Email already registered" })
     }
 
    const [ result] = await pool.query(
@@ -38,9 +39,10 @@ export const getUsers  = async( req, res) => {
    const [rows] = await pool.query(`
       SELECT 
         users.*, 
-        roles.name 
+        roles.role_name 
       FROM users
       LEFT JOIN roles ON users.role_id = roles.role_id
+       WHERE users.is_deleted = 0
     `);
 
     return sendResponse(res, 200, "Users retrieved successfully", rows);
@@ -74,21 +76,21 @@ export const getUserById = async (req, res) => {
 
   export const updateUser = async (req, res) => {
   const { user_id } = req.params;
-  const { first_name, last_name, email, role_id, status } = req.body;
+  const { first_name, last_name,  role_id, status } = req.body;
 
   try {
-    // 1. Check if user exists
+    
     const [rows] = await pool.query("SELECT * FROM users WHERE user_id = ?", [user_id]);
     if (rows.length === 0) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // 2. Update the user
+   
     await pool.query(
       `UPDATE users 
-       SET first_name = ?, last_name = ?, email = ?, role_id = ?, status = ?
+       SET first_name = ?, last_name = ?,  role_id = ?, status = ?
        WHERE user_id = ?`,
-      [first_name, last_name, email, role_id, status, user_id]
+      [first_name, last_name, role_id, status, user_id]
     );
 
     // 3. Return success response
@@ -96,7 +98,7 @@ export const getUserById = async (req, res) => {
       user_id,
       first_name,
       last_name,
-      email,
+   
       role_id,
       status,
     });
@@ -106,6 +108,31 @@ export const getUserById = async (req, res) => {
     return sendError(res, 500, "Failed to update user", error.message);
   }
 };
+
+
+
+export const deleteUser = async (req, res) => {
+    const { user_id } = req.params;
+  
+    try{
+      const [rows] = await pool.query('SELECT * FROM users WHERE user_id = ? AND is_deleted = 0', [user_id]);
+      if(rows.length === 0) {
+        sendError(res, 404, "User not found or already deleted", { message: 'User not found or already deleted'})
+      }
+ await pool.query('UPDATE users SET is_deleted = 1 WHERE user_id = ?', [user_id]);
+
+ return sendResponse(res, 200, "User deleted successfully", { deletedId: user_id });
+
+
+    }catch(error) {
+      console.error('Soft delete error:', error);
+      return sendError(res, 500, "Internal Server Error", error.message);
+    }
+
+    }
+
+  
+
 
  
 
