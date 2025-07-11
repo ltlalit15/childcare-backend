@@ -1,7 +1,10 @@
 import express from 'express';
 import {
   addCourse,
-  getCoursesByUser
+  deleteCourse,
+  getCourses,
+  getCoursesByUser,
+  updateCourse
 } from '../controllers/course.controller.js';
 
 // import { verifyToken } from '../middleware/auth.middleware.js';
@@ -18,11 +21,26 @@ router.post(
   addCourse
 );
 
+router.patch(
+  "/:course_id",
+  upload.single("certificate"),
+  updateCourse
+);
+
 router.get(
   "/:user_id",
 //   verifyToken,
 //   authorizeRoles("Admin", "Secretary", "Teacher"),
   getCoursesByUser
 );
+
+router.get( "/",getCourses);
+
+
+router.delete(
+  "/:course_id",
+//   verifyToken,
+//   authorizeRoles("Admin", "Secretary"),
+  deleteCourse );
 
 export default router;

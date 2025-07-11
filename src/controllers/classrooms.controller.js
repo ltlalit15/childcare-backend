@@ -4,9 +4,9 @@ import { sendError, sendResponse } from '../utils/response.js';
 export const getAllClassrooms = async (req, res) => {
   try {
     const [rows] = await pool.query('SELECT * FROM Classrooms');
-    res.json(rows);
+    return sendResponse(res, 200, 'Classroom retrieved successfully', rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+   sendError(res, 500, 'Failed To get Classroom');
   }
 };
 
@@ -14,9 +14,9 @@ export const getClassroomById = async (req, res) => {
   try {
     const [rows] = await pool.query('SELECT * FROM Classrooms WHERE classroom_id = ?', [req.params.id]);
     if (rows.length === 0) return res.status(404).json({ message: 'Classroom not found' });
-    res.json(rows[0]);
+    return sendResponse(res, 200, 'Classroom retrieved successfully', rows[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendError(res, 500, 'Failed To get Classroom');
   }
 };
 
