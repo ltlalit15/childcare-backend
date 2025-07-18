@@ -23,9 +23,9 @@ export const getClassroomById = async (req, res) => {
 export const createClassroom = async (req, res) => {
   const { name } = req.body;
   try {
-    const [result] = await pool.query('INSERT INTO Classrooms (name) VALUES (?)', [name]);
+    const [result] = await pool.query('INSERT INTO classrooms (name) VALUES (?)', [name]);
      const insertedId = result.insertId;
-     const [rows] = await pool.query('SELECT * FROM Classrooms WHERE classroom_id = ?', [insertedId]);
+     const [rows] = await pool.query('SELECT * FROM classrooms WHERE classroom_id = ?', [insertedId]);
       console.log(rows);
 
       const clasroomData = {
@@ -33,16 +33,16 @@ export const createClassroom = async (req, res) => {
         name: name
       }
     
-    return sendResponse(res, 201, 'Classroom created successfully', clasroomData);
+    return sendResponse(res, 201, 'classroom created successfully', clasroomData);
       
     // res.status(201).json({ id: result.insertId });
    
   } catch (err) {
     if (err.code === 'ER_DUP_ENTRY') {
-      res.status(400).json({ error: 'Classroom name must be unique' });
-      sendError(res, 400, 'Classroom name must be unique', { err: err.message });
+      res.status(400).json({ error: 'classroom name must be unique' });
+      sendError(res, 400, 'classroom name must be unique', { err: err.message });
     } else {
-     sendError(res, 500, 'Failed To Add Classroom', { err: err.message });
+     sendError(res, 500, 'Failed To Add classroom', { err: err.message });
     }
   }
 };
