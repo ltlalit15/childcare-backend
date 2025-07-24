@@ -16,12 +16,14 @@ dotenv.config();
 
 
 const pool = mysql.createPool({
-  host: '127.0.0.1',
-  port: 3306,
-  user: 'root',
-  password: '',
-  database: 'myapp_kids',
-  multipleStatements: true
+  host: 'ballast.proxy.rlwy.net', // ✅ Updated host
+  user: 'root',                   // ✅ Same user
+  password: 'uZpMAxvGTAYHLQcDiEMJyfcoxFIILAdq', // ✅ Updated password
+  database: 'railway',           // ✅ Same database
+  port: 20044,                   // ✅ Updated port
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
 });
 
 (async () => {
