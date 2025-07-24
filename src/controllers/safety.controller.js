@@ -5,7 +5,7 @@ import { uploadToCloudinary } from '../utils/uploadToCloudinary.js';
 // ===== FIRE DRILLS =====
 export const getFireDrills = async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM Fire_Drills ORDER BY date DESC');
+    const [rows] = await pool.query('SELECT * FROM fire_drills ORDER BY date DESC');
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -16,7 +16,7 @@ export const getFireDrills = async (req, res) => {
 export const getFireDrillById = async (req, res) => {
   const { id } = req.params;
   try {
-    const [rows] = await pool.query('SELECT * FROM Fire_Drills WHERE fire_drill_id = ?', [id]);
+    const [rows] = await pool.query('SELECT * FROM fire_drills WHERE fire_drill_id = ?', [id]);
     if (rows.length === 0) {
       return res.status(404).json({ message: 'Fire drill not found' });
     }
@@ -39,13 +39,13 @@ export const createFireDrill = async (req, res) => {
 
   try {
     const [result] = await pool.query(
-      `INSERT INTO Fire_Drills (date, conductedby, remarks, document)
+      `INSERT INTO fire_drills (date, conductedby, remarks, document)
        VALUES (?, ?, ?, ?)`,
       [date, conductedby, remarks, document]
     );
 
     // Fetch the inserted row
-    const [rows] = await pool.query(`SELECT * FROM Fire_Drills WHERE fire_drill_id = ?`, [result.insertId]);
+    const [rows] = await pool.query(`SELECT * FROM fire_drills WHERE fire_drill_id = ?`, [result.insertId]);
 
     return sendResponse(res, 201, "Fire drill added successfully", rows[0]);
   } catch (err) {
@@ -71,7 +71,7 @@ export const updateFireDrill = async (req, res) => {
 
   try {
     const [result] = await pool.query(
-      `UPDATE Fire_Drills 
+      `UPDATE fire_drills 
        SET date = ?, conductedby = ?, remarks = ?, document = ?
        WHERE fire_drill_id = ?`,
       [date, conductedby, remarks, document, id]
@@ -83,7 +83,7 @@ export const updateFireDrill = async (req, res) => {
 
     // Fetch the updated row
     const [rows] = await pool.query(
-      `SELECT * FROM Fire_Drills WHERE fire_drill_id = ?`,
+      `SELECT * FROM fire_drills WHERE fire_drill_id = ?`,
       [id]
     );
 
@@ -96,7 +96,7 @@ export const updateFireDrill = async (req, res) => {
 export const deleteFireDrill = async (req, res) => {
   const { id } = req.params;
   try {
-    const [result] = await pool.query('DELETE FROM Fire_Drills WHERE fire_drill_id = ?', [id]);
+    const [result] = await pool.query('DELETE FROM fire_drills WHERE fire_drill_id = ?', [id]);
     if (result.affectedRows === 0) {
 
       return res.status(404).json({ message: 'Fire drill not found' });
@@ -114,7 +114,7 @@ export const deleteFireDrill = async (req, res) => {
 // ===== EVACUATIONS =====
 export const getEvacuations = async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM Evacuations ORDER BY date DESC');
+    const [rows] = await pool.query('SELECT * FROM evacuations ORDER BY date DESC');
     return sendResponse(res, 200, "Evacuations fetched successfully", rows);
   } catch (err) {
     return sendResponse(res, 500, "Error fetching evacuations", { error: err.message });
@@ -125,7 +125,7 @@ export const getEvacuations = async (req, res) => {
 export const getEvacuationsbyId = async (req, res) => {
   try {
     const { id } = req.params;
-    const [rows] = await pool.query('SELECT * FROM Evacuations WHERE evacuation_id = ?', [id]);
+    const [rows] = await pool.query('SELECT * FROM evacuations WHERE evacuation_id = ?', [id]);
     if (rows.length === 0) {
       return res.status(404).json({ message: 'Evacuation not found' });
     }
@@ -156,13 +156,13 @@ export const createEvacuation = async (req, res) => {
 
     // Insert into database
     const [result] = await pool.query(
-      `INSERT INTO Evacuations (date, conducted_by, remarks, document)
+      `INSERT INTO evacuations (date, conducted_by, remarks, document)
        VALUES (?, ?, ?, ?)`,
       [date, conducted_by, remarks, document]
     );
 
     const [rows] = await pool.query(
-      `SELECT * FROM Evacuations WHERE evacuation_id = ?`,
+      `SELECT * FROM evacuations WHERE evacuation_id = ?`,
       [result.insertId]
     );
 
@@ -186,7 +186,7 @@ export const updateEvacuation = async (req, res) => {
 
   try {
     const [result] = await pool.query(
-      `UPDATE Evacuations SET date = ?, conducted_by = ?, remarks = ?, document = ? WHERE evacuation_id = ?`,
+      `UPDATE evacuations SET date = ?, conducted_by = ?, remarks = ?, document = ? WHERE evacuation_id = ?`,
       [date, conducted_by, remarks, document, id]
     );
 
@@ -195,7 +195,7 @@ export const updateEvacuation = async (req, res) => {
     }
 
 
-    const [rows] = await pool.query(`SELECT * FROM Evacuations WHERE evacuation_id = ?`, [id]);
+    const [rows] = await pool.query(`SELECT * FROM evacuations WHERE evacuation_id = ?`, [id]);
 
 
     return sendResponse(res, 200, "Evacuations updated successfully", rows[0]);
@@ -207,7 +207,7 @@ export const updateEvacuation = async (req, res) => {
 export const deleteEvacuation = async (req, res) => {
   const { id } = req.params;
   try {
-    const [result] = await pool.query(`DELETE FROM Evacuations WHERE evacuation_id = ?`, [id]);
+    const [result] = await pool.query(`DELETE FROM evacuations WHERE evacuation_id = ?`, [id]);
     if (result.affectedRows === 0) {
       return sendResponse(res, 404, "Evacuations not found");
     }
