@@ -18,7 +18,7 @@ router.get("/get-all-emp", getAllEmployees);
 // Payroll Routes
 router.post("/", addPayrollEntry);
 router.get("/", getAllPayrollEntries);
-router.put("/:id", updatePayrollEntry);
+router.patch("/:id", updatePayrollEntry);
 router.delete("/:id", deletePayrollEntry);
 router.get('/summary', getPayrollSummary);
 export default router;
