@@ -5,7 +5,7 @@ import { sendError, sendResponse } from '../utils/response.js';
 export const addCourse = async (req, res) => {
   const {
     user_id,
-    course_name,
+    name,
     completion_date,
     expiration_date,
   } = req.body;
@@ -20,9 +20,9 @@ export const addCourse = async (req, res) => {
 
     // Insert new course
     const [result] = await pool.query(
-      `INSERT INTO courses (user_id, course_name, completion_date, expiration_date, certificate_file)
+      `INSERT INTO courses (user_id, name, completion_date, expiration_date, certificate_file)
        VALUES (?, ?, ?, ?, ?)`,
-      [user_id, course_name, completion_date, expiration_date, certificate_file]
+      [user_id, name, completion_date, expiration_date, certificate_file]
     );
 
     const insertedId = result.insertId;

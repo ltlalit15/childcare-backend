@@ -36,7 +36,7 @@ export const addEmployee = async (req, res) => {
 // GET ALL EMPLOYEES
 export const getAllEmployees = async (req, res) => {
     try {
-        const [rows] = await pool.query(`SELECT * FROM employees ORDER BY employee_id DESC`);
+        const [rows] = await pool.query(`SELECT * FROM employees ORDER BY user_id DESC`);
         res.status(200).json(rows);
     } catch (err) {
         console.error("Get All Employees Error:", err);
@@ -46,21 +46,21 @@ export const getAllEmployees = async (req, res) => {
 
 // ADD PAYROLL ENTRY
 export const addPayrollEntry = async (req, res) => {
-    const { employee_id, amount, recurrence } = req.body;
+    const { user_id, amount, recurrence } = req.body;
 
-    if (!employee_id || !amount || !recurrence) {
+    if (!user_id || !amount || !recurrence) {
         return res.status(400).json({ message: "All fields are required" });
     }
 
     try {
-        const [emp] = await pool.query("SELECT * FROM employees WHERE employee_id = ?", [employee_id]);
+        const [emp] = await pool.query("SELECT * FROM users WHERE user_id = ?", [user_id]);
         if (emp.length === 0) {
             return res.status(404).json({ message: "Employee not found" });
         }
 
         await pool.query(
-            `INSERT INTO payroll_entries (employee_id, amount, recurrence) VALUES (?, ?, ?)`,
-            [employee_id, amount, recurrence]
+            `INSERT INTO payroll_entries (user_id, amount, recurrence) VALUES (?, ?, ?)`,
+            [user_id, amount, recurrence]
         );
 
         res.status(201).json({ message: "Payroll entry added successfully" });
@@ -74,9 +74,11 @@ export const addPayrollEntry = async (req, res) => {
 export const getAllPayrollEntries = async (req, res) => {
     try {
         const [rows] = await pool.query(`
-            SELECT p.*, e.full_name AS employee_name
+            SELECT 
+                p.*, 
+                CONCAT(u.first_name, ' ', u.last_name) AS employee_name
             FROM payroll_entries p
-            JOIN employees e ON p.employee_id = e.employee_id
+            JOIN users u ON p.user_id = u.user_id
             ORDER BY p.created_at DESC
         `);
         res.status(200).json(rows);
@@ -85,15 +87,15 @@ export const getAllPayrollEntries = async (req, res) => {
         res.status(500).json({ message: "Server error" });
     }
 };
-// UPDATE PAYROLL ENTRY
+
 // UPDATE PAYROLL ENTRY
 export const updatePayrollEntry = async (req, res) => {
-    const { id } = req.params;
+    const { id } = req.params; // This should be the payroll entry ID
     const { amount, recurrence } = req.body;
 
     try {
         const [result] = await pool.query(
-            `UPDATE payroll_entries SET amount = ?, recurrence = ? WHERE employee_id = ?`,
+            `UPDATE payroll_entries SET amount = ?, recurrence = ? WHERE id = ?`,
             [amount, recurrence, id]
         );
 
@@ -108,6 +110,7 @@ export const updatePayrollEntry = async (req, res) => {
     }
 };
 
+
 // DELETE PAYROLL ENTRY
 
 // DELETE PAYROLL ENTRY
@@ -116,7 +119,7 @@ export const deletePayrollEntry = async (req, res) => {
 
     try {
         const [result] = await pool.query(
-            `DELETE FROM payroll_entries WHERE employee_id = ?`,
+            `DELETE FROM payroll_entries WHERE user_id = ?`,
             [id]
         );
 
@@ -132,24 +135,21 @@ export const deletePayrollEntry = async (req, res) => {
 };
 
 
-
-
-//Payroll Records//
 export const getPayrollSummary = async (req, res) => {
     try {
         const [rows] = await pool.query(`
-      SELECT 
-        e.full_name AS employee_name,
-        p.amount,
-        p.recurrence,
-        p.created_at
-      FROM payroll_entries p
-      JOIN employees e ON e.employee_id = p.employee_id
-    `);
+            SELECT 
+                CONCAT(u.first_name, ' ', u.last_name) AS employee_name,
+                p.amount,
+                p.recurrence,
+                p.created_at
+            FROM payroll_entries p
+            JOIN users u ON u.user_id = p.user_id
+        `);
 
         const summary = rows.map(entry => {
             const created = dayjs(entry.created_at);
-            const recurrence = entry.recurrence.toLowerCase();
+            const recurrence = entry.recurrence?.toLowerCase();
             let nextPayment = created;
             let lastPayment = created;
 
@@ -172,7 +172,9 @@ export const getPayrollSummary = async (req, res) => {
                 amount: entry.amount,
                 recurrence: entry.recurrence,
                 last_payment: created.format("YYYY-MM-DD"),
-                next_payment: typeof nextPayment === "string" ? nextPayment : nextPayment.format("YYYY-MM-DD")
+                next_payment: typeof nextPayment === "string"
+                    ? nextPayment
+                    : nextPayment.format("YYYY-MM-DD")
             };
         });
 
@@ -182,3 +184,4 @@ export const getPayrollSummary = async (req, res) => {
         res.status(500).json({ success: false, message: "Server error", error: err.message });
     }
 };
+
