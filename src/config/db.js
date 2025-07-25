@@ -16,11 +16,11 @@ dotenv.config();
 
 
 const pool = mysql.createPool({
-  host: 'ballast.proxy.rlwy.net', // ✅ Updated host
-  user: 'root',                   // ✅ Same user
-  password: 'uZpMAxvGTAYHLQcDiEMJyfcoxFIILAdq', // ✅ Updated password
-  database: 'railway',           // ✅ Same database
-  port: 20044,                   // ✅ Updated port
+  host: 'caboose.proxy.rlwy.net',           // ✅ Match CLI hostname
+  user: 'root',                              // ✅ Same as CLI user
+  password: 'hTbWPTjbfuQgKmyFUVrRlmLFCDIDxKGr', // ✅ Password from CLI
+  database: 'railway',                       // ✅ Same database
+  port: 12799,                               // ✅ Port from CLI
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
