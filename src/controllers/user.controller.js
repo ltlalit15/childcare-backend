@@ -145,7 +145,7 @@ export const loginUser = async (req, res) => {
 
   const token = jwt.sign(
     { user_id: user.user_id, role: user.role },
-    'a3b5c1d9e8f71234567890abcdef1234567890abcdefabcdef1234567890yyweyw',
+    'supersecretkey',
     { expiresIn: "1d" }
   );
   res.json({ token, user, role });
