@@ -934,3 +934,56 @@ export const deleteChild = async (req, res) => {
 };
 
 
+export const getChildrenByTeacherOrClassroom = async (req, res) => {
+    const { teacher_id, classroom_id } = req.query;
+
+    if (!teacher_id && !classroom_id) {
+        return res.status(400).json({
+            message: "Please provide either teacher_id or classroom_id",
+            success: false
+        });
+    }
+
+    try {
+        let query = `
+            SELECT 
+                c.*, 
+                u.first_name, u.last_name, u.email AS user_email, 
+                u.phone AS user_phone, u.status AS user_status,
+                r.name AS role_name
+            FROM children c
+            JOIN users u ON c.user_id = u.user_id
+            JOIN roles r ON u.role_id = r.role_id
+            WHERE c.is_deleted = 0
+        `;
+        const params = [];
+
+        if (teacher_id) {
+            query += " AND c.assigned_teacher_id = ?";
+            params.push(teacher_id);
+        }
+
+        if (classroom_id) {
+            query += " AND c.assigned_classroom = ?";
+            params.push(classroom_id);
+        }
+
+        query += " ORDER BY c.full_name ASC";
+
+        const [children] = await pool.query(query, params);
+
+        return res.status(200).json({
+            message: "Children retrieved successfully",
+            children,
+            success: true
+        });
+
+    } catch (error) {
+        console.error("Failed to retrieve children by filter:", error);
+        return res.status(500).json({
+            message: "Internal server error",
+            error: error.message,
+            success: false
+        });
+    }
+};

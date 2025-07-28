@@ -6,7 +6,8 @@ import {
   getChild,
   updateChild,
   getAllChildren,
-  deleteChild
+  deleteChild,
+  getChildrenByTeacherOrClassroom
 } from '../controllers/child.controller.js';
 // import { verifyToken, authorizeRoles } from '../middleware/auth.js';
 
@@ -80,6 +81,8 @@ router.patch(
   childUploads,
   updateChild
 );
+
+router.get('/children/by-filter', getChildrenByTeacherOrClassroom);
 
 // Multer error handler
 router.use((error, req, res, next) => {

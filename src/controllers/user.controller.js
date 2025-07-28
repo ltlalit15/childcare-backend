@@ -131,11 +131,6 @@ export const deleteUser = async (req, res) => {
 
     }
 
-  
-
-
- 
-
 
 export const loginUser = async (req, res) => {
   const { email, password } = req.body;
@@ -150,5 +145,5 @@ export const loginUser = async (req, res) => {
     process.env.JWT_SECRET,
     { expiresIn: "1d" }
   );
-  res.json({ token, user, role });
+  res.json({ token, user });
 };

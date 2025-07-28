@@ -200,7 +200,7 @@ export const getTeachers = async (req, res) => {
     );
     res.json(rows);
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch teachers", error: error.message });
+    res.status(500).json({ message: "Failed to fetch staff", error: error.message });
   }
 };
 
@@ -215,10 +215,10 @@ export const getTeacherById = async (req, res) => {
        WHERE u.user_id = ? AND u.role_id = (SELECT role_id FROM roles WHERE name = 'Teacher')`,
       [id]
     );
-    if (!rows.length) return res.status(404).json({ message: "Teacher not found" });
+    if (!rows.length) return res.status(404).json({ message: "Staff not found" });
     res.json(rows[0]);
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch teacher", error: error.message });
+    res.status(500).json({ message: "Failed to fetch staff", error: error.message });
   }
 };
 
@@ -299,6 +299,36 @@ export const updateTeacher = async (req, res) => {
     connection.release();
   }
 };
+
+
+export const updateSSN = async (req, res) => {
+  const connection = await pool.getConnection();
+  try {
+    const { id } = req.params;
+    const { ssn } = req.body;
+
+    if (!ssn) {
+      return res.status(400).json({ message: "SSN is required" });
+    }
+
+    const [result] = await connection.query(
+      `UPDATE users SET ssn = ? WHERE user_id = ?`,
+      [ssn, id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({ message: "SSN updated successfully" });
+
+  } catch (error) {
+    res.status(500).json({ message: "Failed to update SSN", error: error.message });
+  } finally {
+    connection.release();
+  }
+};
+
 
 // Delete teacher
 export const deleteTeacher = async (req, res) => {

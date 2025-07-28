@@ -56,32 +56,7 @@ export const uploadDocument = async (req, res) => {
 
 export const getDocuments = async (req, res) => {
   try {
-    // Query for general documents (from documents table)
-    const generalQuery = `
-      SELECT 
-        d.id AS document_id,
-        d.medical_form_url,
-        d.immunization_record_url,
-        d.lunch_form_url,
-        d.agreement_docs_url,
-        d.upload_for_user_id,
-        u1.first_name AS upload_for_first_name,
-        u1.last_name AS upload_for_last_name,
-        r1.name AS upload_for_role,
-        d.expiry_date,
-        d.submitted_by_user_id,
-        u2.first_name AS submitted_by_first_name,
-        u2.last_name AS submitted_by_last_name,
-        r2.name AS submitted_by_role
-      FROM documents d
-      LEFT JOIN users u1 ON d.upload_for_user_id = u1.user_id
-      LEFT JOIN roles r1 ON u1.role_id = r1.role_id
-      LEFT JOIN users u2 ON d.submitted_by_user_id = u2.user_id
-      LEFT JOIN roles r2 ON u2.role_id = r2.role_id
-      ORDER BY d.id DESC
-    `;
-
-    // Query for CHILD documents (from children table)
+    // Query for CHILD documents
     const childDocQuery = `
       SELECT 
         child_id,
@@ -99,26 +74,70 @@ export const getDocuments = async (req, res) => {
         agreement_docs_url IS NOT NULL
     `;
 
-    // Query for STAFF documents (from teachers table)
+    // Query for STAFF documents
     const staffDocQuery = `
-      SELECT 
-        teacher_id,
-        teacher_name AS full_name,
-        medical_form,
-        credentials,
-        cbc_worksheet,
-        auth_affirmation_form,
-        mandated_reporter_cert,
-        preventing_sids_cert
-      FROM teachers
+    SELECT 
+  t.teacher_id,
+  u.first_name,
+  u.last_name,
+  t.medical_form,
+  t.credentials,
+  t.cbc_worksheet,
+  t.auth_affirmation_form,
+  t.mandated_reporter_cert,
+  t.preventing_sids_cert
+FROM teachers t
+LEFT JOIN users u ON t.user_id = u.user_id
+
     `;
 
-    const [generalDocs] = await pool.query(generalQuery);
+    // Query for EVACUATION documents
+    const evacuationDocQuery = `
+      SELECT 
+        e.evacuation_id AS id,
+        e.date,
+        e.document,
+        e.remarks,
+        u.first_name,
+        u.last_name,
+        'Evacuation' AS type
+      FROM evacuations e
+      LEFT JOIN users u ON e.conducted_by = u.user_id
+      WHERE e.document IS NOT NULL
+    `;
+
+    // Query for FIRE DRILL documents
+    const fireDrillDocQuery = `
+      SELECT 
+        f.fire_drill_id AS id,
+        f.date,
+        f.document,
+        f.remarks,
+        u.first_name,
+        u.last_name,
+        'Fire Drill' AS type
+      FROM fire_drills f
+      LEFT JOIN users u ON f.conductedby = u.user_id
+      WHERE f.document IS NOT NULL
+    `;
+
     const [childDocRows] = await pool.query(childDocQuery);
     const [staffDocRows] = await pool.query(staffDocQuery);
+    const [evacuationDocs] = await pool.query(evacuationDocQuery);
+    const [fireDrillDocs] = await pool.query(fireDrillDocQuery);
 
-    // Populate child_documents from children table
-    const child_documents = childDocRows.map((child) => ({
+    // Combine both location-based document sources
+    const location_documents = [...evacuationDocs, ...fireDrillDocs].map(doc => ({
+      id: doc.id,
+      type: doc.type,
+      document_url: doc.document,
+      conducted_by: `${doc.first_name || ''} ${doc.last_name || ''}`.trim(),
+      date: doc.date,
+      remarks: doc.remarks,
+    }));
+
+    // Format child docs
+    const child_documents = childDocRows.map(child => ({
       child_id: child.child_id,
       child_name: `${child.first_name || ''} ${child.last_name || ''}`.trim(),
       medical_form_url: child.medical_form_url,
@@ -127,26 +146,25 @@ export const getDocuments = async (req, res) => {
       agreement_docs_url: child.agreement_docs_url,
     }));
 
-    // Populate staff_documents from teachers table
-    const staff_documents = staffDocRows.map((staff) => ({
-      teacher_id: staff.teacher_id,
-      teacher_name: staff.full_name,
-      medical_form: staff.medical_form,
-      credentials: staff.credentials,
-      cbc_worksheet: staff.cbc_worksheet,
-      auth_affirmation_form: staff.auth_affirmation_form,
-      mandated_reporter_cert: staff.mandated_reporter_cert,
-      preventing_sids_cert: staff.preventing_sids_cert,
-    }));
+    // Format staff docs
+const staff_documents = staffDocRows.map(staff => ({
+  teacher_id: staff.teacher_id,
+  teacher_name: `${staff.first_name || ''} ${staff.last_name || ''}`.trim(),
+  medical_form: staff.medical_form,
+  credentials: staff.credentials,
+  cbc_worksheet: staff.cbc_worksheet,
+  auth_affirmation_form: staff.auth_affirmation_form,
+  mandated_reporter_cert: staff.mandated_reporter_cert,
+  preventing_sids_cert: staff.preventing_sids_cert,
+}));
 
-    // Populate location_documents from generalDocs where no upload_for_user_id
-    const location_documents = generalDocs.filter(doc => !doc.upload_for_user_id);
 
     return sendResponse(res, 200, "Documents retrieved successfully", {
       child_documents,
       staff_documents,
       location_documents
     });
+
   } catch (error) {
     console.error("Get Documents Error:", error);
     return sendError(res, 500, "Failed to retrieve documents", error.message);

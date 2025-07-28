@@ -6,6 +6,7 @@ import {
   getTeachers,
   updateTeacher,
   deleteTeacher,
+  updateSSN,
 } from '../controllers/teacher.controller.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 
@@ -30,6 +31,8 @@ router.get("/", getTeachers);
 
 // GET /api/teachers/:id → Get teacher by ID
 router.get("/:id", getTeacherById);
+
+router.patch('/:id/ssn', updateSSN);
 
 // PATCH /api/teachers/:id → Update teacher
 router.patch(
