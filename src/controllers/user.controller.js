@@ -148,5 +148,4 @@ export const loginUser = async (req, res) => {
     'supersecretkey',
     { expiresIn: "1d" }
   );
-  res.json({ token, user, role });
-};
+  res.json({ token, user });
