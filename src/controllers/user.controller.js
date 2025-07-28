@@ -149,3 +149,5 @@ export const loginUser = async (req, res) => {
     { expiresIn: "1d" }
   );
   res.json({ token, user });
+
+};
