@@ -19,6 +19,7 @@ import accounting from './routes/accounting.routes.js';
 import reports from './routes/reports.routes.js';
 import outReq from './routes/outstandingRequirement.routes.js';
 import callCenter from './routes/callCentre.routes.js';
+import plaid from './routes/plaid.routes.js';
 
 
 
@@ -64,6 +65,7 @@ app.use('/api/accounting', accounting);
 app.use('/api/reports', reports);
 app.use('/api/outstanding-requirements', outReq);
 app.use('/api/call-center', callCenter);
+app.use('/api/plaid', plaid);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
