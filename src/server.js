@@ -24,7 +24,11 @@ import callCenter from './routes/callCentre.routes.js';
 
 dotenv.config();
 const app = express();
-app.use(cors());
+app.use(cors({
+    origin: ['http://localhost:5173'],  // ✅ Only allow localhost:5173
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],  // ✅ Allow selected HTTP methods
+   // allowedHeaders: ['Content-Type', 'Authorization']  // ✅ Allow these headers
+}));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
