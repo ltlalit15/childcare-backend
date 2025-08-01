@@ -1,8 +1,24 @@
 import pool from '../config/db.js';
 import { sendResponse } from '../utils/response.js';
-import { uploadToCloudinary } from '../utils/uploadToCloudinary.js';
+//import { uploadToCloudinary } from '../utils/uploadToCloudinary.js';
+import cloudinary from "cloudinary";
 import bcrypt from 'bcryptjs';
 
+// ✅ Cloudinary Config (direct credentials)
+cloudinary.v2.config({
+  cloud_name: "dflse5uml",
+  api_key: "968877372139259",
+  api_secret: "LdDm3phJvG3ZkRKUU6FkJA87BLo",
+});
+
+const uploadToCloudinary = async (filePath) => {
+  try {
+    const result = await cloudinary.v2.uploader.upload(filePath);
+    return result.secure_url;
+  } catch (error) {
+    throw new Error("Cloudinary upload failed: " + error.message);
+  }
+};
 
 export const addTeacher = async (req, res) => {
   const connection = await pool.getConnection();
@@ -94,6 +110,9 @@ export const addTeacher = async (req, res) => {
     const mandated_reporter_cert = await uploadOrNull('mandated_reporter_cert');
     const preventing_sids_cert = await uploadOrNull('preventing_sids_cert');
 
+    // ✅ Proper NULL handling for empty date values
+    const safeDate = (value) => (value?.trim() === "" ? null : value);
+
     await connection.query(
       `INSERT INTO teachers (
         user_id, cbc_status, dc_id, notes,
@@ -117,12 +136,12 @@ export const addTeacher = async (req, res) => {
         teacher_name,
         department,
         training_type,
-        last_completed,
-        due_date
+        safeDate(last_completed),
+        safeDate(due_date)
       ]
     );
 
-    // Parse courses from fields
+    // Parse and insert courses
     const courses = [];
     for (const key in req.body) {
       const match = key.match(/^courses\[(\d+)]\[(course_id|completion_date|expiration_date)]$/);
@@ -134,7 +153,6 @@ export const addTeacher = async (req, res) => {
       }
     }
 
-    // Match course certificate files
     for (const file of req.files) {
       const match = file.fieldname.match(/^courses\[(\d+)]\[certificate]$/);
       if (match) {
@@ -145,14 +163,13 @@ export const addTeacher = async (req, res) => {
       }
     }
 
-    // Insert into staff_courses
     for (const course of courses) {
       const { course_id, completion_date, expiration_date, certificate } = course;
       if (course_id && completion_date && expiration_date) {
         await connection.query(
           `INSERT INTO staff_courses (staff_id, course_id, completion_date, expiration_date, certificate_url)
            VALUES (?, ?, ?, ?, ?)`,
-          [user_id, course_id, completion_date, expiration_date, certificate || null]
+          [user_id, course_id, safeDate(completion_date), safeDate(expiration_date), certificate || null]
         );
       }
     }
