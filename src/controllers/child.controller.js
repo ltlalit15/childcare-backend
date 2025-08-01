@@ -116,6 +116,8 @@ import { sendError, sendResponse } from "../utils/response.js";
 //import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
 import { v2 as cloudinary } from "cloudinary";
 import bcrypt from "bcrypt";
+import fs from 'fs';
+
 
 // 🛠️ Cloudinary config using your credentials (directly in code as requested)
 cloudinary.config({
