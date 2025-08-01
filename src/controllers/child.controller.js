@@ -461,13 +461,13 @@ export const addChild = async (req, res) => {
 
         const user_id = userResult.insertId;
 
-        // ----------------- Cloudinary Upload Utility -----------------
+        // Cloudinary Upload Utility
         const uploadFile = async (file) => file ? await uploadToCloudinary(file.path) : null;
         const uploadMultipleFiles = async (filesArray) => filesArray?.length
             ? await Promise.all(filesArray.map(file => uploadFile(file)))
             : [];
 
-        // ----------------- Uploading Files -----------------
+        // Uploading Files
         const photo_url = await uploadFile(files?.photo?.[0]);
         const auth_affirmation_form_url = await uploadFile(files?.auth_affirmation_form?.[0]);
         const immunization_record_url = await uploadFile(files?.immunization_record?.[0]);
@@ -477,17 +477,17 @@ export const addChild = async (req, res) => {
         const lunch_form_urls = await uploadMultipleFiles(files?.lunch_form);
         const agreement_docs_urls = await uploadMultipleFiles(files?.agreement_docs);
 
-        // ----------------- Insert into children -----------------
+        // Insert into children
         await pool.query(`
             INSERT INTO children (
-                child_id, user_id, full_name,first_name,last_name, nickname_english, nickname_hebrew,
+                child_id, user_id, full_name, first_name, last_name, nickname_english, nickname_hebrew,
                 gender, dob_english, dob_hebrew, enrollment_date, assigned_teacher_id,
                 mother_name, father_name, home_phone, mother_cell, father_cell,
                 mother_workplace, father_workplace, number_of_children_in_family,
                 email, address, photo_url, auth_affirmation_form_url,
                 immunization_record_url, medical_form_url, assigned_classroom,
                 notes, nap_time_instructions
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `, [
             user_id, user_id, child.full_name, child.first_name, child.last_name, child.nickname_english, child.nickname_hebrew,
             child.gender, child.dob_english, child.dob_hebrew, child.enrollment_date,
@@ -500,10 +500,10 @@ export const addChild = async (req, res) => {
             child.notes, child.nap_time_instructions
         ]);
 
-        // ----------------- Emergency Contacts -----------------
+        // Emergency Contacts
         let contacts = [];
         if (typeof emergency_contacts === 'string') {
-            try { contacts = JSON.parse(emergency_contacts); } catch (e) { }
+            try { contacts = JSON.parse(emergency_contacts); } catch (e) {}
         } else if (Array.isArray(emergency_contacts)) {
             contacts = emergency_contacts;
         }
@@ -520,7 +520,7 @@ export const addChild = async (req, res) => {
             ]);
         }
 
-        // ----------------- Medical Info -----------------
+        // Medical Info
         await pool.query(`
             INSERT INTO medical_info (
                 child_id, physician_name, physician_phone, allergies, vaccine_info,
@@ -538,7 +538,7 @@ export const addChild = async (req, res) => {
             medical_info?.medical_notes
         ]);
 
-        // ----------------- Documents -----------------
+        // Documents
         await pool.query(`
             INSERT INTO documents (
                 child_id, medical_form_url, immunization_record_url, lunch_form_url, agreement_docs_url
@@ -547,8 +547,8 @@ export const addChild = async (req, res) => {
             user_id,
             medical_form_url,
             immunization_record_url,
-            JSON.stringify(lunch_form_urls),        // Store as JSON array if multiple
-            JSON.stringify(agreement_docs_urls)     // Store as JSON array if multiple
+            JSON.stringify(lunch_form_urls),
+            JSON.stringify(agreement_docs_urls)
         ]);
 
         await pool.query('COMMIT');
@@ -563,6 +563,7 @@ export const addChild = async (req, res) => {
         return res.status(500).json({ message: 'Add child failed', error: err.message });
     }
 };
+
 
 export const getChild = async (req, res) => {
     const { child_id } = req.params;
