@@ -5,11 +5,11 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const pool = mysql.createPool({
-  host: '127.0.0.1',
-  user: 'root',
-  password: '',
-  database: 'myapp_kids',
-  port: 3306,
+  host: 'caboose.proxy.rlwy.net',           // ✅ Match CLI hostname
+  user: 'root',                              // ✅ Same as CLI user
+  password: 'hTbWPTjbfuQgKmyFUVrRlmLFCDIDxKGr', // ✅ Password from CLI
+  database: 'railway',                       // ✅ Same database
+  port: 12799,                               // ✅ Port from CLI
   waitForConnections: true,
   connectionLimit: 10,
 });

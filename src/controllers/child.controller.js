@@ -113,8 +113,34 @@
 //import { send } from "process";
 import pool from "../config/db.js"
 import { sendError, sendResponse } from "../utils/response.js";
-import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
+//import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
+import { v2 as cloudinary } from "cloudinary";
 import bcrypt from "bcrypt";
+import fs from 'fs';
+
+
+// 🛠️ Cloudinary config using your credentials (directly in code as requested)
+cloudinary.config({
+  cloud_name: "dflse5uml",
+  api_key: "968877372139259",
+  api_secret: "LdDm3phJvG3ZkRKUU6FkJA87BLo",
+});
+
+// ✅ Upload utility
+const uploadToCloudinary = async (filePath) => {
+  try {
+    const result = await cloudinary.uploader.upload(filePath, {
+      folder: "children_uploads",
+      resource_type: "auto",
+    });
+
+    // Optional: delete local file after upload (if stored temporarily)
+    fs.unlink(filePath, () => {});
+    return result.secure_url;
+  } catch (err) {
+    throw new Error("Cloudinary upload failed: " + err.message);
+  }
+};
 
 // export const addChild = async (req, res) => {
 //   const { child, emergency_contacts } = req.body;
@@ -431,15 +457,17 @@ import bcrypt from "bcrypt";
 
 
 export const addChild = async (req, res) => {
-    const { child, emergency_contacts, medical_info } = req.body;
-    const files = req.files;
+  const { child, emergency_contacts, medical_info } = req.body;
+  const files = req.files;
 
-    try {
-        await pool.query('START TRANSACTION');
+  try {
+    await pool.query("START TRANSACTION");
 
-        const [roleRows] = await pool.query("SELECT role_id FROM roles WHERE name = 'Child'");
-        if (roleRows.length === 0) throw new Error("Child role not found");
-        const role_id = roleRows[0].role_id;
+    const [roleRows] = await pool.query(
+      "SELECT role_id FROM roles WHERE name = 'Child'"
+    );
+    if (roleRows.length === 0) throw new Error("Child role not found");
+    const role_id = roleRows[0].role_id;
 
         const hashedPassword = await bcrypt.hash(password, 10);
         const [userResult] = await pool.query(`
@@ -447,109 +475,152 @@ export const addChild = async (req, res) => {
                 role_id, first_name, last_name, email, phone,
                 dob, address, status, password
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `, [
-            role_id,
-            child.full_name.split(' ')[0],
-            child.full_name.split(' ').slice(1).join(' '),
-            child.email,
-            child.home_phone,
-            child.dob_english,
-            child.address,
-            'approved',
-            hashedPassword
-        ]);
+        `,
+      [
+        role_id,
+        child.full_name.split(" ")[0],
+        child.full_name.split(" ").slice(1).join(" "),
+        child.email,
+        child.home_phone,
+        child.dob_english,
+        child.address,
+        "approved",
+        hashedPassword,
+      ]
+    );
 
-        const user_id = userResult.insertId;
+    const user_id = userResult.insertId;
 
-        // ----------------- Cloudinary Upload Utility -----------------
-        const uploadFile = async (file) => file ? await uploadToCloudinary(file.path) : null;
-        const uploadMultipleFiles = async (filesArray) => filesArray?.length
-            ? await Promise.all(filesArray.map(file => uploadFile(file)))
-            : [];
+    const uploadFile = async (file) =>
+      file ? await uploadToCloudinary(file.path) : null;
+    const uploadMultipleFiles = async (filesArray) =>
+      filesArray?.length
+        ? await Promise.all(filesArray.map((file) => uploadFile(file)))
+        : [];
 
-        // ----------------- Uploading Files -----------------
-        const photo_url = await uploadFile(files?.photo?.[0]);
-        const auth_affirmation_form_url = await uploadFile(files?.auth_affirmation_form?.[0]);
-        const immunization_record_url = await uploadFile(files?.immunization_record?.[0]);
-        const medical_form_url = await uploadFile(files?.medical_form?.[0]);
-        const special_needs_app_url = await uploadFile(files?.special_needs_app?.[0]);
+    const photo_url = await uploadFile(files?.photo?.[0]);
+    const auth_affirmation_form_url = await uploadFile(
+      files?.auth_affirmation_form?.[0]
+    );
+    const immunization_record_url = await uploadFile(
+      files?.immunization_record?.[0]
+    );
+    const medical_form_url = await uploadFile(files?.medical_form?.[0]);
+    const special_needs_app_url = await uploadFile(
+      files?.special_needs_app?.[0]
+    );
 
-        const lunch_form_urls = await uploadMultipleFiles(files?.lunch_form);
-        const agreement_docs_urls = await uploadMultipleFiles(files?.agreement_docs);
+    const lunch_form_urls = await uploadMultipleFiles(files?.lunch_form);
+    const agreement_docs_urls = await uploadMultipleFiles(
+      files?.agreement_docs
+    );
 
-        // ----------------- Insert into children -----------------
-        await pool.query(`
+    await pool.query(
+      `
             INSERT INTO children (
-                child_id, user_id, full_name,first_name,last_name, nickname_english, nickname_hebrew,
+                child_id, user_id, full_name, first_name, last_name, nickname_english, nickname_hebrew,
                 gender, dob_english, dob_hebrew, enrollment_date, assigned_teacher_id,
                 mother_name, father_name, home_phone, mother_cell, father_cell,
                 mother_workplace, father_workplace, number_of_children_in_family,
                 email, address, photo_url, auth_affirmation_form_url,
                 immunization_record_url, medical_form_url, assigned_classroom,
                 notes, nap_time_instructions
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)
-        `, [
-            user_id, user_id, child.full_name, child.first_name, child.last_name, child.nickname_english, child.nickname_hebrew,
-            child.gender, child.dob_english, child.dob_hebrew, child.enrollment_date,
-            child.assigned_teacher_id, child.mother_name, child.father_name,
-            child.home_phone, child.mother_cell, child.father_cell,
-            child.mother_workplace, child.father_workplace,
-            child.number_of_children_in_family, child.email, child.address,
-            photo_url, auth_affirmation_form_url, immunization_record_url,
-            medical_form_url, child.assigned_classroom,
-            child.notes, child.nap_time_instructions
-        ]);
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `,
+      [
+        user_id,
+        user_id,
+        child.full_name,
+        child.first_name,
+        child.last_name,
+        child.nickname_english,
+        child.nickname_hebrew,
+        child.gender,
+        child.dob_english,
+        child.dob_hebrew,
+        child.enrollment_date,
+        child.assigned_teacher_id,
+        child.mother_name,
+        child.father_name,
+        child.home_phone,
+        child.mother_cell,
+        child.father_cell,
+        child.mother_workplace,
+        child.father_workplace,
+        child.number_of_children_in_family,
+        child.email,
+        child.address,
+        photo_url,
+        auth_affirmation_form_url,
+        immunization_record_url,
+        medical_form_url,
+        child.assigned_classroom,
+        child.notes,
+        child.nap_time_instructions,
+      ]
+    );
 
-        // ----------------- Emergency Contacts -----------------
-        let contacts = [];
-        if (typeof emergency_contacts === 'string') {
-            try { contacts = JSON.parse(emergency_contacts); } catch (e) { }
-        } else if (Array.isArray(emergency_contacts)) {
-            contacts = emergency_contacts;
-        }
+    let contacts = [];
+    if (typeof emergency_contacts === "string") {
+      try {
+        contacts = JSON.parse(emergency_contacts);
+      } catch (e) {}
+    } else if (Array.isArray(emergency_contacts)) {
+      contacts = emergency_contacts;
+    }
 
-        for (const contact of contacts) {
-            await pool.query(`
+    for (const contact of contacts) {
+      await pool.query(
+        `
                 INSERT INTO emergency_contacts (
                     child_id, name, phone, address, relationship_to_child, could_release
                 ) VALUES (?, ?, ?, ?, ?, ?)
-            `, [
-                user_id, contact.name, contact.phone,
-                contact.address, contact.relationship_to_child,
-                contact.could_release || false
-            ]);
-        }
+            `,
+        [
+          user_id,
+          contact.name,
+          contact.phone,
+          contact.address,
+          contact.relationship_to_child,
+          contact.could_release || false,
+        ]
+      );
+    }
 
-        // ----------------- Medical Info -----------------
-        await pool.query(`
+    await pool.query(
+      `
             INSERT INTO medical_info (
                 child_id, physician_name, physician_phone, allergies, vaccine_info,
                 medical_form_url, early_intervention_services, special_needs_app_url, medical_notes
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `, [
-            user_id,
-            medical_info?.physician_name,
-            medical_info?.physician_phone,
-            medical_info?.allergies === 'Yes',
-            medical_info?.vaccine_info,
-            medical_form_url,
-            medical_info?.early_intervention_services === 'Yes',
-            special_needs_app_url,
-            medical_info?.medical_notes
-        ]);
+        `,
+      [
+        user_id,
+        medical_info?.physician_name,
+        medical_info?.physician_phone,
+        medical_info?.allergies === "Yes",
+        medical_info?.vaccine_info,
+        medical_form_url,
+        medical_info?.early_intervention_services === "Yes",
+        special_needs_app_url,
+        medical_info?.medical_notes,
+      ]
+    );
 
-        // ----------------- Documents -----------------
-        await pool.query(`
+    await pool.query(
+      `
             INSERT INTO documents (
                 child_id, medical_form_url, immunization_record_url, lunch_form_url, agreement_docs_url
             ) VALUES (?, ?, ?, ?, ?)
-        `, [
-            user_id,
-            medical_form_url,
-            immunization_record_url,
-            JSON.stringify(lunch_form_urls),        // Store as JSON array if multiple
-            JSON.stringify(agreement_docs_urls)     // Store as JSON array if multiple
-        ]);
+        `,
+      [
+        user_id,
+        medical_form_url,
+        immunization_record_url,
+        JSON.stringify(lunch_form_urls),
+        JSON.stringify(agreement_docs_urls),
+      ]
+    );
 
 
 

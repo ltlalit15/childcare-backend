@@ -49,6 +49,22 @@ import dashboardRoutes from './routes/dashboard.routes.js';
 import childCallCentre from './routes/childCallCentre.routes.js';
 
 // Use routes
+import plaid from './routes/plaid.routes.js';
+
+
+
+dotenv.config();
+
+app.use(cors({
+    origin: ['http://localhost:5173', 'https://coruscating-cactus-a9e89d.netlify.app'],  // ✅ Only allow localhost:5173
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],  // ✅ Allow selected HTTP methods
+   // allowedHeaders: ['Content-Type', 'Authorization']  // ✅ Allow these headers
+}));
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/children', childRoutes);
@@ -73,6 +89,7 @@ app.use('/api/attendance', attendance);
 app.use('/api/notes', my_notes);
 app.use('/api/password', forgetPassword);
 app.use('/api/child-callCentre', childCallCentre);
+app.use('/api/plaid', plaid);
 
 // ✅ Socket.IO handlers
 io.on("connection", (socket) => {
