@@ -56,7 +56,7 @@ import plaid from './routes/plaid.routes.js';
 dotenv.config();
 
 app.use(cors({
-    origin: ['http://localhost:5173', 'https://coruscating-cactus-a9e89d.netlify.app'],  // ✅ Only allow localhost:5173
+    origin: ['http://localhost:5173', 'https://kidscarev1.netlify.app'],  // ✅ Only allow localhost:5173
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],  // ✅ Allow selected HTTP methods
    // allowedHeaders: ['Content-Type', 'Authorization']  // ✅ Allow these headers
 }));
