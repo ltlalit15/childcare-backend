@@ -5,13 +5,14 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const pool = mysql.createPool({
-  host: 'caboose.proxy.rlwy.net',           // ✅ Match CLI hostname
-  user: 'root',                              // ✅ Same as CLI user
-  password: 'hTbWPTjbfuQgKmyFUVrRlmLFCDIDxKGr', // ✅ Password from CLI
-  database: 'railway',                       // ✅ Same database
-  port: 12799,                               // ✅ Port from CLI
+  host: 'yamanote.proxy.rlwy.net',        // ✅ CLI ke host se match
+  user: 'root',                            // ✅ CLI user
+  password: 'MSqTyLWDOiDZYZwtTVeUskwjzkjyGMJM', // ✅ CLI password
+  database: 'railway',                     // ✅ Same database
+  port: 43373,                             // ✅ CLI port
   waitForConnections: true,
   connectionLimit: 10,
+  queueLimit: 0
 });
 
 
