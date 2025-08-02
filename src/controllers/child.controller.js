@@ -441,7 +441,7 @@ export const addChild = async (req, res) => {
         if (roleRows.length === 0) throw new Error("Child role not found");
         const role_id = roleRows[0].role_id;
 
-        const hashedPassword = await bcrypt.hash("defaultpass123", 10);
+        const hashedPassword = await bcrypt.hash(password, 10);
         const [userResult] = await pool.query(`
             INSERT INTO users (
                 role_id, first_name, last_name, email, phone,
@@ -551,7 +551,14 @@ export const addChild = async (req, res) => {
             JSON.stringify(agreement_docs_urls)     // Store as JSON array if multiple
         ]);
 
+
+
         await pool.query('COMMIT');
+
+         await pool.query(
+            `INSERT INTO activities (activity, type,time) VALUES (?, ?, ?)`,
+            [`New child added: ${full_name}`, 'child', new Date()]
+        );
 
         return sendResponse(res, 201, 'Child added successfully', {
             child_id: user_id,
@@ -578,6 +585,7 @@ export const getChild = async (req, res) => {
             FROM children c
             JOIN users u ON c.user_id = u.user_id
             JOIN roles r ON u.role_id = r.role_id
+
             WHERE c.child_id = ?`,
             [child_id]
         );
@@ -646,6 +654,31 @@ export const getChild = async (req, res) => {
 
 
 
+// export const getAllChildren = async (req, res) => {
+//     try {
+//         const [rows] = await pool.query(
+//             `SELECT 
+//                 c.*, 
+//                 u.first_name, u.last_name, u.email AS user_email, 
+//                 u.phone AS user_phone, u.status AS user_status,
+//                 r.name AS role_name
+//                  t.first_name  AS teacher_fisrtname,
+//                 t.last_name AS teacher_last_name
+//             FROM children c
+//             JOIN users u ON c.user_id = u.user_id
+//             JOIN roles r ON u.role_id = r.role_id
+//             LEFT JOIN users t ON c.assigned_teacher_id = t.user_id
+//             ORDER BY c.enrollment_date DESC`
+//         );
+
+//         return sendResponse(res, 200, "Children retrieved successfully.", rows);
+//     } catch (error) {
+//         console.error("Get all children failed:", error);
+//         return sendError(res, 500, "Failed to retrieve children", error.message);
+//     }
+// };
+
+
 export const getAllChildren = async (req, res) => {
     try {
         const [rows] = await pool.query(
@@ -653,10 +686,14 @@ export const getAllChildren = async (req, res) => {
                 c.*, 
                 u.first_name, u.last_name, u.email AS user_email, 
                 u.phone AS user_phone, u.status AS user_status,
-                r.name AS role_name
+                r.name AS role_name,
+                t.first_name AS teacher_first_name,
+                t.last_name AS teacher_last_name
             FROM children c
             JOIN users u ON c.user_id = u.user_id
             JOIN roles r ON u.role_id = r.role_id
+            LEFT JOIN users t ON c.assigned_teacher_id = t.user_id
+            
             ORDER BY c.enrollment_date DESC`
         );
 
@@ -696,8 +733,8 @@ export const updateChild = async (req, res) => {
                 phone = ?, dob = ?, address = ?
              WHERE user_id = ?`,
             [
-                child?.child.first_name,
-                child?.child.last_name,
+                child?.first_name,
+                child?.last_name,
                 child.email,
                 child.home_phone || child.phone,
                 child.dob_english,
@@ -867,6 +904,11 @@ export const updateChild = async (req, res) => {
 
         await pool.query('COMMIT');
 
+         await pool.query(
+            `INSERT INTO activities (activity, type,time) VALUES (?, ?, ?)`,
+            [`Child updated: ${full_name}`, 'child', new Date()]
+        );
+        
         res.status(200).json({
             message: "Child updated successfully.",
             child_id,

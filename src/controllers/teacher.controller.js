@@ -157,6 +157,11 @@ export const addTeacher = async (req, res) => {
       }
     }
 
+      await pool.query(
+      "INSERT INTO activities (activity, type, time) VALUES (?, ?, ?)",
+      [`New teacher added: ${teacher_name}`, 'teacher', new Date()]
+    );
+
     await connection.commit();
 
     const [rows] = await connection.query(
@@ -275,6 +280,11 @@ export const updateTeacher = async (req, res) => {
     );
 
     // Optionally update staff_courses (not shown here for brevity)
+       await pool.query(
+      `INSERT INTO activities (activity, type,time) VALUES (?, ?, ?)`,
+      [`Teacher updated: ${teacher_name}`, 'teacher', new Date()]
+    );
+
 
     await connection.commit();
 

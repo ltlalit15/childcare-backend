@@ -137,14 +137,11 @@ export const getAllActivities = async (req, res) => {
     const [rows] = await pool.query(
       `SELECT * FROM activities ORDER BY time DESC LIMIT 10`
     );
-
     res.status(200).json(rows);
   } catch (error) {
-    console.error("Error fetching activities:", error);
     res.status(500).json({ message: "Failed to fetch activities", error: error.message });
   }
 };
-
 // ✅ Get single activity by ID
 export const getActivityById = async (req, res) => {
   const { id } = req.params;
